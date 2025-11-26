@@ -1,0 +1,10 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: n8n
+spec:
+  interval: 12h
+  url: oci://registry.hub.docker.com/n8nio/helm-charts
+  ref:
+    tag: latest
