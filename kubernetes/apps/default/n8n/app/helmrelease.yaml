@@ -5,51 +5,69 @@ metadata:
   name: n8n
   namespace: default
 spec:
-  chartRef:
-    kind: OCIRepository
-    name: n8n
   interval: 1h
+  chart:
+    spec:
+      chart: app-template
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      version: 2.x.x
+  install:
+    crds: Create
+  upgrade:
+    crds: CreateReplace
   values:
-    replicaCount: 1
-    image:
-      repository: n8nio/n8n
-      tag: latest
-    env:
-      - name: DB_TYPE
-        value: sqlite
-      - name: N8N_SECURE_COOKIE
-        value: "false"
-      - name: N8N_EDITOR_BASE_URL
-        value: https://n8n.${SECRET_DOMAIN}/
-      - name: WEBHOOK_URL
-        value: https://n8n.${SECRET_DOMAIN}/
-      - name: GENERIC_TIMEZONE
-        value: UTC
-    persistence:
-      enabled: true
-      storageClassName: local-path
-      accessMode: ReadWriteOnce
-      size: 10Gi
-      mountPath: /home/node/.n8n
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+    controllers:
+      main:
+        containers:
+          app:
+            image:
+              repository: n8nio/n8n
+              tag: latest
+            env:
+              DB_TYPE: sqlite
+              N8N_SECURE_COOKIE: "false"
+              N8N_EDITOR_BASE_URL: https://n8n.${SECRET_DOMAIN}/
+              WEBHOOK_URL: https://n8n.${SECRET_DOMAIN}/
+              GENERIC_TIMEZONE: UTC
+            ports:
+              http:
+                containerPort: 5678
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                memory: 512Mi
     service:
-      type: ClusterIP
-      port: 80
-      targetPort: 5678
+      main:
+        ports:
+          http:
+            port: 5678
+    persistence:
+      data:
+        enabled: true
+        type: emptyDir
+        globalMounts:
+          - path: /home/node/.n8n
     ingress:
-      enabled: true
-      className: envoy
-      hosts:
-        - host: n8n.${SECRET_DOMAIN}
-          paths:
-            - path: /
-              pathType: Prefix
-      tls:
-        - secretName: n8n-tls
-          hosts:
-            - n8n.${SECRET_DOMAIN}
-    resources:
-      limits:
-        memory: 512Mi
-      requests:
-        cpu: 100m
-        memory: 256Mi
+      main:
+        enabled: true
+        className: nginx
+        hosts:
+          - host: n8n.${SECRET_DOMAIN}
+            paths:
+              - path: /
+                pathType: Prefix
+        tls:
+          - secretName: n8n-tls
+            hosts:
+              - n8n.${SECRET_DOMAIN}
