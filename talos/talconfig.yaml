@@ -1,0 +1,70 @@
+---
+clusterName: kubernetes
+
+talosVersion: "${talosVersion}"
+kubernetesVersion: "${kubernetesVersion}"
+
+endpoint: https://172.31.10.10:6443
+additionalApiServerCertSans: &sans
+  - "127.0.0.1"
+  - "172.31.10.10"
+additionalMachineCertSans: *sans
+
+clusterPodNets: ["10.42.0.0/16"]
+clusterSvcNets: ["10.43.0.0/16"]
+
+# Disable built-in CNI to use Cilium
+cniConfig:
+  name: none
+
+nodes:
+  - hostname: "control-plane-1"
+    ipAddress: "172.31.1.163"
+    installDisk: "/dev/nvme0n1"
+    machineSpec:
+      secureboot: false
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+    controlPlane: true
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "0a:78:09:c7:5a:ad"
+        dhcp: false
+        addresses:
+          - "172.31.1.163/20"
+        routes:
+          - network: "0.0.0.0/0"
+            gateway: "172.31.0.1"
+        mtu: 1500
+        vip:
+          ip: "172.31.10.10"
+  - hostname: "worker-1"
+    ipAddress: "172.31.7.148"
+    installDisk: "/dev/nvme0n1"
+    machineSpec:
+      secureboot: false
+    talosImageURL: factory.talos.dev/installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+    controlPlane: false
+    networkInterfaces:
+      - deviceSelector:
+          hardwareAddr: "0a:76:fe:d6:f7:c1"
+        dhcp: false
+        addresses:
+          - "172.31.7.148/20"
+        routes:
+          - network: "0.0.0.0/0"
+            gateway: "172.31.0.1"
+        mtu: 1500
+
+# Global patches
+patches:
+  - "@./patches/global/machine-files.yaml"
+  - "@./patches/global/machine-kubelet.yaml"
+  - "@./patches/global/machine-network.yaml"
+  - "@./patches/global/machine-sysctls.yaml"
+  - "@./patches/global/machine-time.yaml"
+
+# Controller patches
+controlPlane:
+  patches:
+    - "@./patches/controller/cluster.yaml"
+
