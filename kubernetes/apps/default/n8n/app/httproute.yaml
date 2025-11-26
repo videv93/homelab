@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: n8n
 spec:
   hostnames:
-    - n8n.${SECRET_DOMAIN}
+    - n8n.example.com
   parentRefs:
     - name: envoy-external
       namespace: network

@@ -33,9 +33,9 @@ spec:
             - name: N8N_SECURE_COOKIE
               value: "false"
             - name: N8N_EDITOR_BASE_URL
-              value: https://n8n.${SECRET_DOMAIN}/
+              value: https://n8n.virtual-dev.com/
             - name: WEBHOOK_URL
-              value: https://n8n.${SECRET_DOMAIN}/
+              value: https://n8n.virtual-dev.com/
             - name: GENERIC_TIMEZONE
               value: UTC
           resources:
